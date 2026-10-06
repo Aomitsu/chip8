@@ -1,36 +1,32 @@
 use minifb::{Key, Window, WindowOptions};
 
-const WINDOW_WIDTH: usize = 640;
-const WINDOW_HEIGHT: usize = 360;
-
-const CHIP8_WIDTH: usize = 64;
-const CHIP8_HEIGHT: usize = 32;
-
-// Display scale factors: 64x32 scaled 10x becomes 640x320, leaving letterbox bars
-const SCALE_X: usize = WINDOW_WIDTH / CHIP8_WIDTH; // 10
-const SCALE_Y: usize = 10; // 10 (total 320px high)
-const OFFSET_Y: usize = (WINDOW_HEIGHT - (CHIP8_HEIGHT * SCALE_Y)) / 2; // 20px top/bottom padding
+use crate::chip8::{VIDEO_HEIGHT, VIDEO_WIDTH};
 
 pub struct Platform {
     window: Window,
     buffer: Vec<u32>,
+    canvas_size: usize,
 }
 
 impl Platform {
-    pub fn new() -> Self {
+    pub fn new(canvas_size: usize) -> Self {
         let window = Window::new(
             "CHIP-8 Emulator",
-            WINDOW_WIDTH,
-            WINDOW_HEIGHT,
+            VIDEO_WIDTH * canvas_size,
+            VIDEO_HEIGHT * canvas_size,
             WindowOptions::default(),
         )
         .unwrap_or_else(|e| {
             panic!("Failed to create minifb window: {e}");
         });
 
-        let buffer = vec![0; WINDOW_WIDTH * WINDOW_HEIGHT];
+        let buffer = vec![0; VIDEO_WIDTH * canvas_size * VIDEO_HEIGHT * canvas_size];
 
-        Platform { window, buffer }
+        Platform {
+            window,
+            buffer,
+            canvas_size,
+        }
     }
 
     // Check if the window is open and user hasn't pressed Escape
@@ -43,24 +39,26 @@ impl Platform {
         // Clear window buffer (black background)
         self.buffer.fill(0);
 
-        for y in 0..CHIP8_HEIGHT {
-            for x in 0..CHIP8_WIDTH {
-                let pixel = chip8_video[y * CHIP8_WIDTH + x];
+        let window_width = VIDEO_WIDTH * self.canvas_size;
+
+        for y in 0..VIDEO_HEIGHT {
+            for x in 0..VIDEO_WIDTH {
+                let pixel = chip8_video[y * VIDEO_WIDTH + x];
                 let color = if pixel != 0 { 0x00FFFFFF } else { 0x00000000 };
 
-                // Draw a 10x10 block for each CHIP-8 pixel with vertical centering
-                for dy in 0..SCALE_Y {
-                    let win_y = OFFSET_Y + (y * SCALE_Y) + dy;
-                    for dx in 0..SCALE_X {
-                        let win_x = (x * SCALE_X) + dx;
-                        self.buffer[win_y * WINDOW_WIDTH + win_x] = color;
+                // Draw a canvas_size x canvas_size block for each CHIP-8 pixel
+                for dy in 0..self.canvas_size {
+                    let win_y = (y * self.canvas_size) + dy;
+                    for dx in 0..self.canvas_size {
+                        let win_x = (x * self.canvas_size) + dx;
+                        self.buffer[win_y * window_width + win_x] = color;
                     }
                 }
             }
         }
 
         self.window
-            .update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_HEIGHT)
+            .update_with_buffer(&self.buffer, window_width, VIDEO_HEIGHT * self.canvas_size)
             .unwrap();
     }
 
