@@ -113,7 +113,7 @@ impl Chip8 {
             self.registers[0xF] = 0;
         }
 
-        self.registers[vx] = sum as u8 & 0xFF;
+        self.registers[vx] = sum as u8;
     }
     /// 8xy5: SUB Vx, Vy - Set Vx = Vx - Vy, set VF = NOT borrow.
     ///
