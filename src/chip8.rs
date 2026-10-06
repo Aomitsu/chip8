@@ -47,7 +47,7 @@ impl Chip8 {
         chip8.memory[FONTSET_START_ADDRESS as usize..fontset_end_address as usize]
             .copy_from_slice(&FONTSET);
 
-        return chip8;
+        chip8
     }
 
     pub fn execute_instruction(&mut self) {
@@ -121,7 +121,7 @@ impl Chip8 {
 
     pub fn get_random_number() -> u8 {
         let mut rng = rand::rng();
-        return rng.random();
+        rng.random()
     }
 
     pub fn tick(&mut self) {
