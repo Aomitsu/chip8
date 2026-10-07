@@ -5,12 +5,14 @@ use rand::RngExt;
 use crate::fontset::{FONTSET, FONTSET_SIZE, FONTSET_START_ADDRESS};
 
 /// Standard CHIP-8 programs start at address 0x200 (512)
-const START_ADDRESS: u16 = 0x200;
+pub const START_ADDRESS: u16 = 0x200;
 
+/// Video buffer width
 pub const VIDEO_WIDTH: usize = 64;
+/// Video buffer height
 pub const VIDEO_HEIGHT: usize = 32;
-
-const VIDEO_DISPLAY_SIZE: usize = VIDEO_WIDTH * VIDEO_HEIGHT;
+/// Video buffer total size
+pub const VIDEO_DISPLAY_SIZE: usize = VIDEO_WIDTH * VIDEO_HEIGHT;
 
 /// Chip8 emulator
 pub struct Chip8 {
@@ -28,6 +30,7 @@ pub struct Chip8 {
 }
 
 impl Chip8 {
+    /// Create new Chip 8 Instance with default fontset
     pub fn new() -> Self {
         let mut chip8 = Chip8 {
             registers: [0; 16],
@@ -43,6 +46,7 @@ impl Chip8 {
             opcode: 0,
         };
 
+        // Init default fontset
         let fontset_end_address = FONTSET_START_ADDRESS + FONTSET_SIZE as u16;
         chip8.memory[FONTSET_START_ADDRESS as usize..fontset_end_address as usize]
             .copy_from_slice(&FONTSET);
@@ -50,6 +54,7 @@ impl Chip8 {
         chip8
     }
 
+    /// Helper function with the instruction table, who execute each instructions
     pub fn execute_instruction(&mut self) {
         match self.opcode & 0xF000 {
             0x0000 => match self.opcode & 0x00FF {
@@ -102,6 +107,7 @@ impl Chip8 {
         }
     }
 
+    /// Load rom file
     pub fn load_rom<P: AsRef<Path>>(&mut self, file: P) -> io::Result<()> {
         let rom = fs::read(file)?;
         let max_size = self.memory.len() - START_ADDRESS as usize;
@@ -119,11 +125,13 @@ impl Chip8 {
         Ok(())
     }
 
+    /// Generate a random u8
     pub fn get_random_number() -> u8 {
         let mut rng = rand::rng();
         rng.random()
     }
 
+    /// Execute a CPU cycle
     pub fn tick(&mut self) {
         // Fetch opcode from memory
         self.opcode = ((self.memory[self.pc as usize] as u16) << 8)
